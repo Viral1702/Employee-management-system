@@ -7,6 +7,7 @@ import 'package:worknest/screens/features_screens/holidays.dart';
 import 'package:worknest/screens/features_screens/profile.dart';
 import 'package:worknest/screens/features_screens/takeleave.dart';
 import 'package:worknest/screens/features_screens/tasks.dart';
+import 'package:worknest/screens/loginpage.dart';
 
 class homePage extends StatelessWidget {
   const homePage({super.key});
@@ -38,6 +39,17 @@ class homePage extends StatelessWidget {
       contactusShow()
     ];
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Color(0xFF102C57),
+        automaticallyImplyLeading: false, // Removes the default back arrow
+        leading: IconButton(
+          icon: Icon(Icons.logout), // Logout icon on the left
+          onPressed: () {
+            _showLogoutConfirmationDialog(context); // Show confirmation dialog
+          },
+          color: Color(0xFFDAC0A3), // Color for the icon
+        ),
+      ),
       body: Container(
         decoration: BoxDecoration(color: Color(0xFF102C57)),
         child: Column(
@@ -45,7 +57,6 @@ class homePage extends StatelessWidget {
           children: [
             //Welcome Page
             Container(
-              // margin: EdgeInsets.symmetric(vertical: 50),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -64,8 +75,7 @@ class homePage extends StatelessWidget {
                   ),
                   GestureDetector(
                     onTap: () {
-                      Get.to(
-                          EmployeeProfile()); // This will be called when the container is tapped
+                      Get.to(EmployeeProfile());
                     },
                     child: Container(
                       height: 80,
@@ -125,6 +135,32 @@ class homePage extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showLogoutConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text("Confirm Logout"),
+          content: Text("Are you sure you want to log out?"),
+          actions: [
+            TextButton(
+              child: Text("Cancel"),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            TextButton(
+              child: Text("Logout"),
+              onPressed: () {
+                Get.offAll(() => loginPage());
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
