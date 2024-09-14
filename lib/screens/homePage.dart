@@ -4,6 +4,7 @@ import 'package:worknest/screens/features_screens/attendance.dart';
 import 'package:worknest/screens/features_screens/checkout.dart';
 import 'package:worknest/screens/features_screens/contactus.dart';
 import 'package:worknest/screens/features_screens/holidays.dart';
+import 'package:worknest/screens/features_screens/profile.dart';
 import 'package:worknest/screens/features_screens/takeleave.dart';
 import 'package:worknest/screens/features_screens/tasks.dart';
 
@@ -61,9 +62,15 @@ class homePage extends StatelessWidget {
                           style: TextStyle(color: Color(0xFFDAC0A3)))
                     ],
                   ),
-                  Container(
-                    height: 80,
-                    child: Image.asset("assets/images/login_avatar.png"),
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(
+                          EmployeeProfile()); // This will be called when the container is tapped
+                    },
+                    child: Container(
+                      height: 80,
+                      child: Image.asset("assets/images/login_avatar.png"),
+                    ),
                   )
                 ],
               ),

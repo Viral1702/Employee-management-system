@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:worknest/screens/homePage.dart';
+import 'package:worknest/screens/homepage.dart';
 
 class loginPage extends StatelessWidget {
   const loginPage({super.key});
