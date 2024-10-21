@@ -1,19 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class tasksShow extends StatelessWidget {
   const tasksShow({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // Sample data for the three containers
-    final List<String> titles = ["Task 1", "Task 2", "Task 3"];
-    final List<String> ids = ["ID001", "ID002", "ID003"];
-    final List<String> descriptions = [
-      "Description for Task 1",
-      "Description for Task 2",
-      "Description for Task 3"
-    ];
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF102C57),
@@ -36,49 +28,82 @@ class tasksShow extends StatelessWidget {
                     width: 250,
                     height: 1,
                     color: Colors.white,
-                  )
+                  ),
                 ],
               ),
             ),
             Expanded(
-              child: ListView.builder(
-                itemCount: titles.length, // Number of items to be displayed
-                itemBuilder: (context, index) {
-                  return Container(
-                    margin: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Color(0xFFD9D9D9),
-                      borderRadius: BorderRadius.all(Radius.circular(5)),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 30),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            titles[index],
-                            style: TextStyle(
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            ids[index],
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Text(
-                            descriptions[index],
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 20,
-                            ),
-                          ),
-                        ],
+              child: StreamBuilder<QuerySnapshot>(
+                stream:
+                    FirebaseFirestore.instance.collection('Tasks').snapshots(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return Center(
+                      child: Text(
+                        "No tasks available",
+                        style: TextStyle(color: Colors.white),
                       ),
-                    ),
+                    );
+                  }
+
+                  final tasks = snapshot.data!.docs;
+
+                  return ListView.builder(
+                    itemCount: tasks.length,
+                    itemBuilder: (context, index) {
+                      var task = tasks[index].data()
+                          as Map<String, dynamic>; // Accessing document data
+
+                      return Container(
+                        margin: EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: Color(0xFFD9D9D9),
+                          borderRadius: BorderRadius.all(Radius.circular(5)),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                task['title'] ??
+                                    'No Title', // Fetching 'title' field
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'ID: ${task['id'] ?? 'No ID'}', // Fetching 'id' field
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                task['description'] ??
+                                    'No Description', // Fetching 'description' field
+                                style: TextStyle(
+                                  fontSize: 16,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                'Team: ${task['teamName'] ?? 'No Team Name'}', // Fetching 'teamName' field
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   );
                 },
               ),

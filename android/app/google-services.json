@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "875293755489",
+    "project_id": "worknest-96613",
+    "storage_bucket": "worknest-96613.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:875293755489:android:636022fcfd9778c431c220",
+        "android_client_info": {
+          "package_name": "com.example.worknest"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDb71pFwphjuYqdOfo6JN-zK_VB0Eu7pFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

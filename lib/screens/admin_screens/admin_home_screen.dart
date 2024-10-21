@@ -155,7 +155,7 @@ class AdminHomeScreen extends StatelessWidget {
             TextButton(
               child: Text("Logout"),
               onPressed: () {
-                Get.offAll(() => loginPage());
+                Get.offAll(() => LoginPage());
               },
             ),
           ],

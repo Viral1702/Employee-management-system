@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
-import 'package:worknest/screens/getstarted.dart';
+import 'package:worknest/screens/splesh_screen.dart'; // Make sure this import is correct
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    await Firebase.initializeApp(); // Ensure Firebase is initialized here
+  } catch (e) {
+    print("Firebase initialization error: $e"); // Error handling
+    return; // Exit if initialization fails
+  }
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {
@@ -13,7 +21,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
-      home: getStarted(),
+      home: SplashScreen(),
     );
   }
 }

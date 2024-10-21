@@ -52,7 +52,7 @@ class getStarted extends StatelessWidget {
                   margin: EdgeInsets.symmetric(horizontal: 50),
                   child: ElevatedButton(
                     onPressed: () {
-                      Get.to(loginPage());
+                      Get.to(LoginPage());
                     },
                     child: Center(
                       child: Text(
