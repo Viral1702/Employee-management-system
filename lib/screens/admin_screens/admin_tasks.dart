@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore package
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:worknest/screens/admin_screens/admin_show_tasks.dart'; // Import Firestore package
 
 class Tasks extends StatefulWidget {
   const Tasks({Key? key}) : super(key: key);
@@ -12,7 +13,6 @@ class _TasksState extends State<Tasks> {
   final _formKey = GlobalKey<FormState>();
 
   // Controllers for the form fields
-  TextEditingController idController = TextEditingController();
   TextEditingController nameController = TextEditingController();
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
@@ -26,7 +26,6 @@ class _TasksState extends State<Tasks> {
   Future<void> addTaskToFirestore() async {
     try {
       await tasksCollection.add({
-        'id': idController.text,
         'name': nameController.text,
         'title': titleController.text,
         'description': descriptionController.text,
@@ -34,7 +33,6 @@ class _TasksState extends State<Tasks> {
       });
 
       // Clear the text fields after successful submission
-      idController.clear();
       nameController.clear();
       titleController.clear();
       descriptionController.clear();
@@ -90,12 +88,6 @@ class _TasksState extends State<Tasks> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       // ID Field
-                      _buildTextField(
-                        controller: idController,
-                        label: 'ID',
-                        hintText: 'Enter task ID',
-                      ),
-                      SizedBox(height: 15),
 
                       // Name Field
                       _buildTextField(
@@ -147,6 +139,30 @@ class _TasksState extends State<Tasks> {
                         ),
                         child: Text(
                           'Add Task',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                      SizedBox(
+                        height: 15,
+                      ),
+                      // Show Tasks ....
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AdminShowTasks()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Color.fromARGB(255, 194, 191, 188),
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          textStyle: TextStyle(
+                            fontSize: 18,
+                          ),
+                        ),
+                        child: Text(
+                          'Show all Tasks',
                           style: TextStyle(color: Colors.black),
                         ),
                       ),

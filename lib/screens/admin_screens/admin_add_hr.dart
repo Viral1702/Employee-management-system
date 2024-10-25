@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AddHR extends StatefulWidget {
@@ -18,6 +19,10 @@ class _AddHRState extends State<AddHR> {
   final TextEditingController positionController = TextEditingController();
   final TextEditingController teamNameController = TextEditingController();
   final TextEditingController salaryController = TextEditingController();
+  final TextEditingController phoneNumberController = TextEditingController();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   Widget build(BuildContext context) {
@@ -80,6 +85,13 @@ class _AddHRState extends State<AddHR> {
                   ),
                   SizedBox(height: 15),
 
+                  _buildTextField(
+                    controller: phoneNumberController,
+                    label: 'Phone Number',
+                    obscureText: true,
+                  ),
+                  SizedBox(height: 15),
+
                   // Position Field
                   _buildTextField(
                     controller: positionController,
@@ -104,33 +116,9 @@ class _AddHRState extends State<AddHR> {
 
                   // Add HR Button
                   ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       if (_formKey.currentState!.validate()) {
-                        // Add HR logic with isAdmin true
-                        FirebaseFirestore.instance.collection('Users').add({
-                          'name': nameController.text,
-                          'email': emailController.text,
-                          'password': passwordController.text,
-                          'position': positionController.text,
-                          'teamName': teamNameController.text,
-                          'salary': salaryController.text,
-                          'isAdmin': true, // isAdmin is set to true
-                        }).then((value) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('HR Added Successfully')),
-                          );
-                          // Clear form fields
-                          nameController.clear();
-                          emailController.clear();
-                          passwordController.clear();
-                          positionController.clear();
-                          teamNameController.clear();
-                          salaryController.clear();
-                        }).catchError((error) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Failed to add HR: $error')),
-                          );
-                        });
+                        await _registerHR();
                       }
                     },
                     style: ElevatedButton.styleFrom(
@@ -185,5 +173,45 @@ class _AddHRState extends State<AddHR> {
         return null;
       },
     );
+  }
+
+  // Function to register the HR in Firebase Auth and Firestore
+  Future<void> _registerHR() async {
+    try {
+      // Create user with email and password
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+
+      // Add user details to Firestore with isAdmin set to true
+      await _firestore.collection('Users').doc(userCredential.user!.uid).set({
+        'name': nameController.text,
+        'email': emailController.text,
+        'position': positionController.text,
+        'phoneNumber': phoneNumberController.text,
+        'teamName': teamNameController.text,
+        'salary': salaryController.text,
+        'isAdmin': true, // isAdmin is set to true for HR
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('HR Added Successfully')),
+      );
+
+      // Clear form fields
+      nameController.clear();
+      emailController.clear();
+      passwordController.clear();
+      phoneNumberController.clear();
+      positionController.clear();
+      teamNameController.clear();
+      salaryController.clear();
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to add HR: $error')),
+      );
+    }
   }
 }

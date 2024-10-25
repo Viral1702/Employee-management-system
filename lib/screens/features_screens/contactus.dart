@@ -6,7 +6,7 @@ class contactusShow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     List<String> positions = ["HR", "Project Manager"];
-    List<String> emails = ["HR@gmail.com", "PM@gmail.com"];
+    List<String> emails = ["viral@gmail.com", "rajveer@gmail.com"];
     List<String> images = [
       "assets/images/login_avatar.png",
       "assets/images/login_avatar.png"

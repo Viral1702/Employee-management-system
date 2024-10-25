@@ -1,46 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class attendanceScreen extends StatelessWidget {
-  const attendanceScreen({super.key});
+class AttendanceScreen extends StatelessWidget {
+  const AttendanceScreen({super.key});
+
+  // Method to get the current logged-in user's ID
+  String? _getCurrentUserId() {
+    User? user = FirebaseAuth.instance.currentUser;
+    return user?.uid;
+  }
 
   @override
   Widget build(BuildContext context) {
-    List<String> date = [
-      "12 Aug 2024",
-      "11 Aug 2024",
-      "10 Aug 2024",
-      "09 Aug 2024"
-    ];
-
-    List<String> timeIn = [
-      "8:00 AM",
-      "8:00 AM",
-      "8:00 AM",
-      "8:00 AM",
-    ];
-    List<String> timeOut = [
-      "5:00 PM",
-      "5:00 PM",
-      "5:00 PM",
-      "5:00 PM",
-    ];
-    List<String> status = ["P", "A", "P", "P"];
+    // Get the current user's ID
+    String? userId = _getCurrentUserId();
 
     return Scaffold(
       appBar: AppBar(
-        iconTheme: IconThemeData(color: Color(0xFFDAC0A3)),
-        backgroundColor: Color(0xFF102C57),
+        iconTheme: const IconThemeData(color: Color(0xFFDAC0A3)),
+        backgroundColor: const Color(0xFF102C57),
       ),
       body: Container(
-        color: Color(0xFF102C57),
+        color: const Color(0xFF102C57),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Container(
-              margin: EdgeInsets.symmetric(vertical: 30),
+              margin: const EdgeInsets.symmetric(vertical: 30),
               child: Column(
                 children: [
-                  Text(
+                  const Text(
                     "Attendance",
                     style: TextStyle(color: Color(0xFFDAC0A3), fontSize: 30),
                   ),
@@ -48,11 +38,11 @@ class attendanceScreen extends StatelessWidget {
                     width: 250,
                     height: 1,
                     color: Colors.white,
-                  )
+                  ),
                 ],
               ),
             ),
-            Row(
+            const Row(
               children: [
                 Expanded(
                   flex: 2,
@@ -92,80 +82,146 @@ class attendanceScreen extends StatelessWidget {
                 ),
               ],
             ),
-            Divider(),
+            const Divider(),
+            // Fetch attendance data from Firestore and display it
             Expanded(
-              child: ListView.builder(
-                itemCount: date.length,
-                itemBuilder: (context, index) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 3.0),
-                    child: Row(
-                      children: [
-                        Expanded(
-                            flex: 2,
-                            child: Container(
-                              margin: EdgeInsets.symmetric(horizontal: 5),
-                              decoration: BoxDecoration(
-                                  color: Color(0xFF787880),
-                                  borderRadius: BorderRadius.circular(5)),
+              child: userId == null
+                  ? const Center(
+                      child: Text(
+                        "User not logged in!",
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    )
+                  : StreamBuilder<QuerySnapshot>(
+                      stream: FirebaseFirestore.instance
+                          .collection('Attendance')
+                          .where('userId', isEqualTo: userId)
+                          .snapshots(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                              child: CircularProgressIndicator());
+                        }
+                        if (snapshot.hasError) {
+                          return const Center(
                               child: Text(
-                                date[index],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 15, color: Color(0xFFDAC0A3)),
-                              ),
-                            )),
-                        Expanded(
-                            flex: 1,
-                            child: Container(
-                              margin: EdgeInsets.symmetric(horizontal: 5),
-                              decoration: BoxDecoration(
-                                  color: Color(0xFF787880),
-                                  borderRadius: BorderRadius.circular(5)),
+                            'Error fetching data',
+                            style: TextStyle(color: Colors.white),
+                          ));
+                        }
+                        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                          return const Center(
                               child: Text(
-                                timeIn[index],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 15, color: Color(0xFFDAC0A3)),
+                            'No attendance records found',
+                            style: TextStyle(color: Colors.white),
+                          ));
+                        }
+
+                        // Get the list of attendance documents
+                        var attendanceDocs = snapshot.data!.docs;
+
+                        return ListView.builder(
+                          itemCount: attendanceDocs.length,
+                          itemBuilder: (context, index) {
+                            var attendance = attendanceDocs[index].data()
+                                as Map<String, dynamic>;
+                            String date = attendance['timestamp'] != null
+                                ? (attendance['timestamp'] as Timestamp)
+                                    .toDate()
+                                    .toString()
+                                    .split(' ')[0]
+                                : 'N/A';
+                            String timeIn = attendance['checkIn'] ?? 'N/A';
+                            String timeOut = attendance['checkOut'] ?? 'N/A';
+                            // Ensure status is "P" only when data is fetched successfully
+                            String status = 'P';
+
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 3.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 5),
+                                      decoration: BoxDecoration(
+                                          color: const Color(0xFF787880),
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
+                                      child: Text(
+                                        date,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Color(0xFFDAC0A3)),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 5),
+                                      decoration: BoxDecoration(
+                                          color: const Color(0xFF787880),
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
+                                      child: Text(
+                                        timeIn,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Color(0xFFDAC0A3)),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 5),
+                                      decoration: BoxDecoration(
+                                          color: const Color(0xFF787880),
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
+                                      child: Text(
+                                        timeOut,
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                            fontSize: 15,
+                                            color: Color(0xFFDAC0A3)),
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    flex: 1,
+                                    child: Container(
+                                      margin: const EdgeInsets.symmetric(
+                                          horizontal: 5),
+                                      decoration: BoxDecoration(
+                                          color: const Color(0xFF787880),
+                                          borderRadius:
+                                              BorderRadius.circular(5)),
+                                      child: Text(
+                                        status, // Always show "P" as the status
+                                        style: const TextStyle(
+                                          color: Colors.green,
+                                          fontSize: 15,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            )),
-                        Expanded(
-                            flex: 1,
-                            child: Container(
-                              margin: EdgeInsets.symmetric(horizontal: 5),
-                              decoration: BoxDecoration(
-                                  color: Color(0xFF787880),
-                                  borderRadius: BorderRadius.circular(5)),
-                              child: Text(
-                                timeOut[index],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 15, color: Color(0xFFDAC0A3)),
-                              ),
-                            )),
-                        Expanded(
-                            flex: 1,
-                            child: Container(
-                              margin: EdgeInsets.symmetric(horizontal: 5),
-                              decoration: BoxDecoration(
-                                  color: Color(0xFF787880),
-                                  borderRadius: BorderRadius.circular(5)),
-                              child: Text(
-                                status[index],
-                                style: TextStyle(
-                                  color: status[index] == "A"
-                                      ? Colors.red
-                                      : Colors.green,
-                                  fontSize: 15,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            )),
-                      ],
+                            );
+                          },
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

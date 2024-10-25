@@ -14,5 +14,10 @@ Input Fild Color
 Color(0xFFD9D9D9)
 
 ======================
- Global Image is 
- Login Image Cartoon female
+Global Image is
+Login Image Cartoon female
+
+=======================
+
+secoundary button color
+Color.fromARGB(255, 194, 191, 188)

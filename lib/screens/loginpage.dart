@@ -1,17 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:get/get.dart';
 import 'package:worknest/screens/admin_screens/admin_home_screen.dart';
-// import 'package:worknest/screens/homepage.dart'; // Ensure the import path is correct
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return GetMaterialApp(
-      home: LoginPage(),
-    );
-  }
-}
+import 'package:worknest/screens/homepage.dart'; // Ensure the correct path for HomeScreen
 
 class LoginPage extends StatefulWidget {
   @override
@@ -25,17 +17,63 @@ class _LoginPageState extends State<LoginPage> {
 
   // Sign in method
   Future<void> _signIn() async {
+    setState(() {
+      errorMessage = ''; // Clear previous errors
+    });
+
+    // Check if fields are empty
+    if (emailController.text.trim().isEmpty ||
+        passwordController.text.trim().isEmpty) {
+      setState(() {
+        errorMessage = "Email and password fields are required.";
+      });
+      return;
+    }
+
     try {
+      // Firebase sign in
       UserCredential userCredential =
           await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
-      // Navigate to the appropriate page based on user type
       if (userCredential.user != null) {
-        // Get.to(() => homePage());
-        Get.to(() => AdminHomeScreen());
+        // Fetch user data from Firestore
+        DocumentSnapshot userDoc = await FirebaseFirestore.instance
+            .collection('Users')
+            .doc(userCredential.user!.uid)
+            .get();
+
+        if (userDoc.exists) {
+          bool isAdmin = userDoc.get('isAdmin'); // Get the isAdmin field
+
+          // Navigate to the appropriate page based on isAdmin field
+          if (isAdmin) {
+            Get.to(() => AdminHomeScreen());
+          } else {
+            Get.to(() => HomePage()); // Navigate to HomeScreen if not admin
+          }
+        } else {
+          setState(() {
+            errorMessage = "User data not found!";
+          });
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      // Handle specific Firebase Auth errors
+      if (e.code == 'user-not-found') {
+        setState(() {
+          errorMessage = "No user found with this email.";
+        });
+      } else if (e.code == 'wrong-password') {
+        setState(() {
+          errorMessage = "Incorrect password.";
+        });
+      } else {
+        setState(() {
+          errorMessage = "Login failed: ${e.message}";
+        });
       }
     } catch (e) {
       setState(() {

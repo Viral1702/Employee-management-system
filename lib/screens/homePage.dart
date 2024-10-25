@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:worknest/screens/features_screens/attendance.dart';
 import 'package:worknest/screens/features_screens/checkout.dart';
 import 'package:worknest/screens/features_screens/contactus.dart';
@@ -9,8 +12,39 @@ import 'package:worknest/screens/features_screens/takeleave.dart';
 import 'package:worknest/screens/features_screens/tasks.dart';
 import 'package:worknest/screens/loginpage.dart';
 
-class homePage extends StatelessWidget {
-  const homePage({super.key});
+class HomePage extends StatefulWidget {
+  const HomePage({Key? key}) : super(key: key);
+
+  @override
+  _HomePageState createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  // Fetch username from Firestore
+  Future<String> fetchUsername() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      var document = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(user.uid)
+          .get();
+      return document['name'] ?? 'User';
+    }
+    return 'User';
+  }
+
+  // Fetch user profile image
+  Future<String> fetchUserProfileImage() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      var document = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(user.uid)
+          .get();
+      return document['profileImage'] ?? 'assets/images/default_avatar.png';
+    }
+    return 'assets/images/default_avatar.png';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,26 +62,27 @@ class homePage extends StatelessWidget {
       "Tasks",
       "Take a Leave",
       "Holidays",
-      "Contect Us"
+      "Contact Us"
     ];
     List myFuns = [
-      attendanceScreen(),
-      checkoutForm(),
+      AttendanceScreen(),
+      CheckoutForm(),
       tasksShow(),
-      takeLeave(),
+      TakeLeave(),
       holidaysShow(),
       contactusShow()
     ];
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF102C57),
-        automaticallyImplyLeading: false, // Removes the default back arrow
+        automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: Icon(Icons.logout), // Logout icon on the left
+          icon: Icon(Icons.logout),
           onPressed: () {
-            _showLogoutConfirmationDialog(context); // Show confirmation dialog
+            _showLogoutConfirmationDialog(context);
           },
-          color: Color(0xFFDAC0A3), // Color for the icon
+          color: Color(0xFFDAC0A3),
         ),
       ),
       body: Container(
@@ -55,37 +90,53 @@ class homePage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            //Welcome Page
-            Container(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Column(
+            // Welcome and Profile Image
+            FutureBuilder<List<String>>(
+              future: Future.wait([fetchUsername(), fetchUserProfileImage()]),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return CircularProgressIndicator();
+                } else if (snapshot.hasError) {
+                  return Text('Error loading user data');
+                } else {
+                  String username = snapshot.data?[0] ?? 'User';
+                  String profileImage =
+                      snapshot.data?[1] ?? 'assets/images/default_avatar.png';
+
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      Text(
-                        "Hi, NATASHA",
-                        style: TextStyle(
-                            color: Color(0xFFC1AE99),
-                            fontSize: 25,
-                            fontWeight: FontWeight.bold),
+                      Column(
+                        children: [
+                          Text(
+                            "Hi, $username",
+                            style: TextStyle(
+                              color: Color(0xFFC1AE99),
+                              fontSize: 25,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text("Welcome to WorkNest",
+                              style: TextStyle(color: Color(0xFFDAC0A3))),
+                        ],
                       ),
-                      Text("Welocme to WorkNest",
-                          style: TextStyle(color: Color(0xFFDAC0A3)))
+                      GestureDetector(
+                        onTap: () {
+                          Get.to(() => EmployeeProfile());
+                        },
+                        child: CircleAvatar(
+                          radius: 40,
+                          backgroundImage: profileImage.startsWith('http')
+                              ? NetworkImage(profileImage)
+                              : AssetImage(profileImage) as ImageProvider,
+                        ),
+                      ),
                     ],
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      Get.to(EmployeeProfile());
-                    },
-                    child: Container(
-                      height: 80,
-                      child: Image.asset("assets/images/login_avatar.png"),
-                    ),
-                  )
-                ],
-              ),
+                  );
+                }
+              },
             ),
-            // Cards Container
+            // Features List
             Container(
               margin: EdgeInsets.symmetric(horizontal: 40, vertical: 40),
               height: 500,
@@ -99,7 +150,6 @@ class homePage extends StatelessWidget {
                       onTap: () => Get.to(myFuns[i]),
                       child: Container(
                         padding: EdgeInsets.all(10),
-                        // color: Color(0xFF102C57),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.black, width: 2),
                           borderRadius: BorderRadius.all(Radius.circular(8)),
@@ -109,9 +159,10 @@ class homePage extends StatelessWidget {
                             Container(
                               padding: EdgeInsets.all(5),
                               decoration: BoxDecoration(
-                                  color: Color(0xFF212C3D),
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(50))),
+                                color: Color(0xFF212C3D),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(50)),
+                              ),
                               child: Icon(
                                 myIcons[i],
                                 color: Color(0xFFDAC0A3),
@@ -122,9 +173,11 @@ class homePage extends StatelessWidget {
                               style: TextStyle(
                                   color: Color(0xFFDAC0A3), fontSize: 30),
                             ),
-                            Text(myFeatures[i],
-                                style: TextStyle(
-                                    color: Color(0xFFDAC0A3), fontSize: 20))
+                            Text(
+                              myFeatures[i],
+                              style: TextStyle(
+                                  color: Color(0xFFDAC0A3), fontSize: 20),
+                            ),
                           ],
                         ),
                       ),
@@ -149,7 +202,7 @@ class homePage extends StatelessWidget {
             TextButton(
               child: Text("Cancel"),
               onPressed: () {
-                Navigator.of(context).pop(); // Close the dialog
+                Navigator.of(context).pop();
               },
             ),
             TextButton(

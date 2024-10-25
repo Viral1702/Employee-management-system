@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firebase Firestore
+import 'package:cloud_firestore/cloud_firestore.dart'; // Firestore
+import 'package:firebase_auth/firebase_auth.dart'; // Firebase Auth
 
 class AddEmployee extends StatefulWidget {
   const AddEmployee({Key? key}) : super(key: key);
@@ -20,29 +21,26 @@ class _AddEmployeeState extends State<AddEmployee> {
   final TextEditingController positionController = TextEditingController();
   final TextEditingController salaryController = TextEditingController();
 
-  // Firestore instance
+  // Firestore and Firebase Auth instances
   final FirebaseFirestore firestore = FirebaseFirestore.instance;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xFF102C57), // Set background for full screen
+      backgroundColor: Color(0xFF102C57),
       appBar: AppBar(
         iconTheme: IconThemeData(color: Color(0xFFDAC0A3)),
         backgroundColor: Color(0xFF102C57),
       ),
       body: SafeArea(
-        // Wrap in SafeArea to avoid status bar overlap
         child: Container(
-          color: Color(
-              0xFF102C57), // Ensure the container background color is consistent
+          color: Color(0xFF102C57),
           child: SingleChildScrollView(
-            // Added SingleChildScrollView for scrolling
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
                 children: [
-                  // Header
                   Container(
                     margin: EdgeInsets.symmetric(vertical: 30),
                     child: Column(
@@ -60,74 +58,58 @@ class _AddEmployeeState extends State<AddEmployee> {
                       ],
                     ),
                   ),
-
                   Form(
                     key: _formKey,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Name Field
                         _buildTextField(
                           controller: nameController,
                           label: 'Name',
                         ),
                         SizedBox(height: 15),
-
-                        // Email Field
                         _buildTextField(
                           controller: emailController,
                           label: 'Email',
                           keyboardType: TextInputType.emailAddress,
                         ),
                         SizedBox(height: 15),
-
-                        // Password Field
                         _buildTextField(
                           controller: passwordController,
                           label: 'Password',
                           obscureText: true,
                         ),
                         SizedBox(height: 15),
-
-                        // Number Field
                         _buildTextField(
                           controller: numberController,
                           label: 'Number',
                           keyboardType: TextInputType.phone,
                         ),
                         SizedBox(height: 15),
-
-                        // Team Name Field
                         _buildTextField(
                           controller: teamNameController,
                           label: 'Team Name',
                         ),
                         SizedBox(height: 15),
-
-                        // Position Field
                         _buildTextField(
                           controller: positionController,
                           label: 'Position',
                         ),
                         SizedBox(height: 15),
-
-                        // Salary Field
                         _buildTextField(
                           controller: salaryController,
                           label: 'Salary',
                           keyboardType: TextInputType.number,
                         ),
                         SizedBox(height: 30),
-
-                        // Add Employee Button
                         ElevatedButton(
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
-                              _addEmployee(); // Call the function to add employee to Firebase
+                              _addEmployee(); // Call the updated function to add employee
                             }
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Color(0xFFDAC0A3), // Button color
+                            backgroundColor: Color(0xFFDAC0A3),
                             padding: EdgeInsets.symmetric(vertical: 15),
                             textStyle: TextStyle(
                               fontSize: 18,
@@ -183,22 +165,36 @@ class _AddEmployeeState extends State<AddEmployee> {
     );
   }
 
-  // Function to add employee to Firebase
-  void _addEmployee() {
-    firestore.collection('Users').add({
-      'name': nameController.text,
-      'email': emailController.text,
-      'password': passwordController.text,
-      'number': numberController.text,
-      'teamName': teamNameController.text,
-      'position': positionController.text,
-      'salary': salaryController.text,
-      'isAdmin': false, // Default value for isAdmin
-    }).then((value) {
-      print("Employee Added to Firebase");
+  // Function to add employee to Firebase Auth and Firestore
+  Future<void> _addEmployee() async {
+    try {
+      // Create user in Firebase Authentication
+      UserCredential userCredential =
+          await _auth.createUserWithEmailAndPassword(
+        email: emailController.text,
+        password: passwordController.text,
+      );
+
+      // Get the user's unique ID (UID)
+      String uid = userCredential.user!.uid;
+
+      // Add employee details to Firestore 'Users' collection with the same UID
+      await firestore.collection('Users').doc(uid).set({
+        'uid': uid,
+        'name': nameController.text,
+        'email': emailController.text,
+        'phoneNumber': numberController.text,
+        'teamName': teamNameController.text,
+        'position': positionController.text,
+        'salary': salaryController.text,
+        'isAdmin': false, // Default value for isAdmin
+      });
+
+      print("Employee added to Firebase Auth and Firestore");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Employee added successfully')),
       );
+
       // Clear the form after submission
       nameController.clear();
       emailController.clear();
@@ -207,11 +203,11 @@ class _AddEmployeeState extends State<AddEmployee> {
       teamNameController.clear();
       positionController.clear();
       salaryController.clear();
-    }).catchError((error) {
-      print("Failed to add employee: $error");
+    } catch (e) {
+      print("Failed to add employee: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to add employee')),
       );
-    });
+    }
   }
 }
