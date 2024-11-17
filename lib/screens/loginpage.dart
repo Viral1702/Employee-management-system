@@ -82,6 +82,40 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  // Forgot password method
+  Future<void> _forgotPassword() async {
+    String email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      setState(() {
+        errorMessage = "Please enter your email to reset password.";
+      });
+      return;
+    }
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+
+      setState(() {
+        errorMessage = "Password reset link sent! Please check your email.";
+      });
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        setState(() {
+          errorMessage = "No user found with this email.";
+        });
+      } else {
+        setState(() {
+          errorMessage = "Error: ${e.message}";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = "An error occurred: ${e.toString()}";
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -189,10 +223,7 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: 20),
                     Center(
                       child: TextButton(
-                        onPressed: () {
-                          // Logic for forgot password
-                          print("Forgot Password pressed");
-                        },
+                        onPressed: _forgotPassword,
                         child: Text(
                           "Forgot Password?",
                           style: TextStyle(

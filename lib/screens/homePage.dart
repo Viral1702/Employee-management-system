@@ -1,8 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-
 import 'package:worknest/screens/features_screens/attendance.dart';
 import 'package:worknest/screens/features_screens/checkout.dart';
 import 'package:worknest/screens/features_screens/contactus.dart';
@@ -11,50 +9,32 @@ import 'package:worknest/screens/features_screens/profile.dart';
 import 'package:worknest/screens/features_screens/takeleave.dart';
 import 'package:worknest/screens/features_screens/tasks.dart';
 import 'package:worknest/screens/loginpage.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({Key? key}) : super(key: key);
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
-  @override
-  _HomePageState createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  // Fetch username from Firestore
-  Future<String> fetchUsername() async {
+  Future<Map<String, dynamic>> fetchUserData() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       var document = await FirebaseFirestore.instance
           .collection('Users')
           .doc(user.uid)
           .get();
-      return document['name'] ?? 'User';
+      return document.data() ?? {}; // Return the user data map if available
     }
-    return 'User';
-  }
-
-  // Fetch user profile image
-  Future<String> fetchUserProfileImage() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      var document = await FirebaseFirestore.instance
-          .collection('Users')
-          .doc(user.uid)
-          .get();
-      return document['profileImage'] ?? 'assets/images/default_avatar.png';
-    }
-    return 'assets/images/default_avatar.png';
+    return {}; // Return an empty map if no user is logged in
   }
 
   @override
   Widget build(BuildContext context) {
     List myIcons = [
-      Icons.edit,
-      Icons.schedule,
-      Icons.assignment,
+      Icons.person,
       Icons.person_remove,
+      Icons.edit_square,
       Icons.event,
-      Icons.contacts
+      Icons.add,
+      Icons.person_add
     ];
     List myFeatures = [
       "Attendance",
@@ -75,70 +55,83 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF102C57),
+        backgroundColor: const Color(0xFF102C57),
         automaticallyImplyLeading: false,
         leading: IconButton(
-          icon: Icon(Icons.logout),
+          icon: const Icon(Icons.logout),
           onPressed: () {
             _showLogoutConfirmationDialog(context);
           },
-          color: Color(0xFFDAC0A3),
+          color: const Color(0xFFDAC0A3),
         ),
       ),
       body: Container(
-        decoration: BoxDecoration(color: Color(0xFF102C57)),
+        decoration: const BoxDecoration(color: Color(0xFF102C57)),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Welcome and Profile Image
-            FutureBuilder<List<String>>(
-              future: Future.wait([fetchUsername(), fetchUserProfileImage()]),
+            FutureBuilder<Map<String, dynamic>>(
+              future: fetchUserData(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text('Error loading user data');
-                } else {
-                  String username = snapshot.data?[0] ?? 'User';
-                  String profileImage =
-                      snapshot.data?[1] ?? 'assets/images/default_avatar.png';
+                String name = "User";
+                String profileImageUrl = "assets/images/login_avatar.png";
 
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Column(
-                        children: [
-                          Text(
-                            "Hi, $username",
-                            style: TextStyle(
-                              color: Color(0xFFC1AE99),
-                              fontSize: 25,
-                              fontWeight: FontWeight.bold,
-                            ),
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  // Placeholder image while loading
+                  profileImageUrl = "assets/images/login_avatar.png";
+                } else if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                  // Get name and profileImage from snapshot
+                  name = snapshot.data!['name'] ?? "User";
+                  profileImageUrl = snapshot.data!['profileImage'] ??
+                      "assets/images/login_avatar.png";
+                }
+
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Column(
+                      children: [
+                        Text(
+                          "Hi, $name",
+                          style: const TextStyle(
+                            color: Color(0xFFC1AE99),
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text("Welcome to WorkNest",
-                              style: TextStyle(color: Color(0xFFDAC0A3))),
-                        ],
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Get.to(() => EmployeeProfile());
-                        },
-                        child: CircleAvatar(
-                          radius: 40,
-                          backgroundImage: profileImage.startsWith('http')
-                              ? NetworkImage(profileImage)
-                              : AssetImage(profileImage) as ImageProvider,
+                        ),
+                        const Text(
+                          "Welcome to WorkNest",
+                          style: TextStyle(color: Color(0xFFDAC0A3)),
+                        ),
+                      ],
+                    ),
+                    GestureDetector(
+                      onTap: () {
+                        Get.to(EmployeeProfile());
+                      },
+                      child: Container(
+                        height: 80,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          image: DecorationImage(
+                            image: profileImageUrl.isNotEmpty &&
+                                    Uri.parse(profileImageUrl).isAbsolute
+                                ? NetworkImage(profileImageUrl)
+                                : const AssetImage(
+                                        "assets/images/login_avatar.png")
+                                    as ImageProvider,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
-                    ],
-                  );
-                }
+                    ),
+                  ],
+                );
               },
             ),
-            // Features List
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 40, vertical: 40),
+              margin: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
               height: 500,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -149,39 +142,40 @@ class _HomePageState extends State<HomePage> {
                     GestureDetector(
                       onTap: () => Get.to(myFuns[i]),
                       child: Container(
-                        padding: EdgeInsets.all(10),
+                        padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
                           border: Border.all(color: Colors.black, width: 2),
-                          borderRadius: BorderRadius.all(Radius.circular(8)),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(8)),
                         ),
                         child: Row(
                           children: [
                             Container(
-                              padding: EdgeInsets.all(5),
+                              padding: const EdgeInsets.all(5),
                               decoration: BoxDecoration(
-                                color: Color(0xFF212C3D),
+                                color: const Color(0xFF212C3D),
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(50)),
+                                    const BorderRadius.all(Radius.circular(50)),
                               ),
                               child: Icon(
                                 myIcons[i],
-                                color: Color(0xFFDAC0A3),
+                                color: const Color(0xFFDAC0A3),
                               ),
                             ),
-                            Text(
+                            const Text(
                               "  |  ",
                               style: TextStyle(
                                   color: Color(0xFFDAC0A3), fontSize: 30),
                             ),
                             Text(
                               myFeatures[i],
-                              style: TextStyle(
+                              style: const TextStyle(
                                   color: Color(0xFFDAC0A3), fontSize: 20),
                             ),
                           ],
                         ),
                       ),
-                    )
+                    ),
                 ],
               ),
             ),
@@ -196,17 +190,17 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text("Confirm Logout"),
-          content: Text("Are you sure you want to log out?"),
+          title: const Text("Confirm Logout"),
+          content: const Text("Are you sure you want to log out?"),
           actions: [
             TextButton(
-              child: Text("Cancel"),
+              child: const Text("Cancel"),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: Text("Logout"),
+              child: const Text("Logout"),
               onPressed: () {
                 Get.offAll(() => LoginPage());
               },

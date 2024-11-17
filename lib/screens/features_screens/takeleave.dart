@@ -20,6 +20,36 @@ class _TakeLeaveState extends State<TakeLeave> {
   String? descriptionError;
   String? fromDateError;
   String? toDateError;
+  String userName = '';
+  String profileImage = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchUserInfo();
+  }
+
+  // Fetch user data from Firestore
+  Future<void> fetchUserInfo() async {
+    User? user = _auth.currentUser;
+    if (user != null) {
+      // Get user data from Firestore based on UID
+      DocumentSnapshot userDoc =
+          await _firestore.collection('Users').doc(user.uid).get();
+
+      if (userDoc.exists) {
+        setState(() {
+          // Set dynamic user info
+          userName = userDoc['name']; // 'name' field from Firestore
+          profileImage = userDoc['profile']; // 'profile' field (image URL)
+        });
+      } else {
+        print("User data not found");
+      }
+    } else {
+      print("No user signed in");
+    }
+  }
 
   // Method to handle leave application submission
   Future<void> applyLeave() async {
@@ -44,9 +74,11 @@ class _TakeLeaveState extends State<TakeLeave> {
         User? user = _auth.currentUser;
         String userId = user?.uid ?? 'unknown_user';
 
-        // Store data in Firestore's Attendance collection
-        await _firestore.collection('Attendance').add({
+        // Store data in Firestore's Leaves collection
+        await _firestore.collection('Leaves').add({
           'userId': userId,
+          'name': userName,
+          'profileImage': profileImage,
           'reason': reasonController.text,
           'description': descriptionController.text,
           'fromDate': fromDateController.text,

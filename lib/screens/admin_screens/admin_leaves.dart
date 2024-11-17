@@ -52,7 +52,11 @@ class _LeavesState extends State<Leaves> {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return Center(child: Text('No leave applications found.'));
+                    return Center(
+                        child: Text(
+                      'No leave applications found.',
+                      style: TextStyle(color: Color(0xFFDAC0A3)),
+                    ));
                   }
 
                   return ListView(

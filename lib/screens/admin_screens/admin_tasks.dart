@@ -14,6 +14,7 @@ class _TasksState extends State<Tasks> {
 
   // Controllers for the form fields
   TextEditingController nameController = TextEditingController();
+  TextEditingController idController = TextEditingController();
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
   TextEditingController teamNameController = TextEditingController();
@@ -28,6 +29,7 @@ class _TasksState extends State<Tasks> {
       await tasksCollection.add({
         'name': nameController.text,
         'title': titleController.text,
+        'id': idController.text,
         'description': descriptionController.text,
         'teamName': teamNameController.text,
       });
@@ -98,6 +100,13 @@ class _TasksState extends State<Tasks> {
                       SizedBox(height: 15),
 
                       // Title Field
+                      _buildTextField(
+                        controller: idController,
+                        label: 'ID',
+                        hintText: 'Enter task id',
+                      ),
+                      SizedBox(height: 15),
+
                       _buildTextField(
                         controller: titleController,
                         label: 'Title',
